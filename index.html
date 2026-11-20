@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>TV Show Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f4f5f3;
+        --surface: #ffffff;
+        --surface-2: #eceee9;
+        --ink: #1a1e1c;
+        --ink-soft: #4c554f;
+        --ink-faint: #6d7771;
+        --line: #d8dcd4;
+        --accent: #0f766e;
+        --accent-ink: #ffffff;
+        --accent-soft: #e0f2ef;
+        --amber: #b45309;
+        --amber-soft: #fdf0dd;
+        --red: #b42318;
+        --red-soft: #fdecea;
+        --green: #067647;
+        --green-soft: #e6f4ea;
+        --shadow: 0 1px 3px rgba(20, 30, 25, 0.08), 0 4px 14px rgba(20, 30, 25, 0.06);
+        --radius: 10px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #131615;
+          --surface: #1d2120;
+          --surface-2: #262b29;
+          --ink: #eef1ee;
+          --ink-soft: #b9c2bc;
+          --ink-faint: #8d9791;
+          --line: #343b37;
+          --accent: #2dd4bf;
+          --accent-ink: #06231f;
+          --accent-soft: #123a35;
+          --amber: #f2b04e;
+          --amber-soft: #3d2f14;
+          --red: #ff8a7a;
+          --red-soft: #40201c;
+          --green: #5fd68a;
+          --green-soft: #173526;
+          --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 14px rgba(0,0,0,0.3);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      h1, h2, h3 { font-family: "Archivo", "Public Sans", system-ui, sans-serif; line-height: 1.2; margin: 0; }
+      button, input, select { font: inherit; }
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 44px; }
+      a { color: var(--accent); }
+      img { display: block; max-width: 100%; }
+
+      .wrap { max-width: 1020px; margin: 0 auto; padding: 20px 16px 48px; }
+
+      header.page-head { padding: 10px 0 4px; }
+      header.page-head h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.01em; }
+      header.page-head p { margin: 8px 0 0; color: var(--ink-soft); max-width: 62ch; }
+
+      section.block {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+        margin-top: 18px;
+      }
+      section.block > h2 { font-size: 20px; font-weight: 700; }
+      section.block > .sub { color: var(--ink-soft); margin: 6px 0 0; font-size: 15px; }
+
+      /* Search */
+      .search-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+      .search-row input[type="search"] {
+        flex: 1 1 220px;
+        padding: 10px 14px;
+        border: 1.5px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .search-row input[type="search"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+      .status-line { margin-top: 12px; font-size: 15px; color: var(--ink-soft); min-height: 1.4em; }
+      .status-line.error { color: var(--red); }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: 1.5px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        min-height: 44px;
+      }
+      .btn:hover { border-color: var(--ink-faint); }
+      .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+      .btn.primary:hover { filter: brightness(1.07); }
+      .btn.small { padding: 6px 12px; min-height: 40px; font-size: 14px; }
+      .btn.danger { color: var(--red); border-color: var(--line); }
+      .btn.danger.armed { background: var(--red); border-color: var(--red); color: #fff; }
+      .btn:disabled { opacity: 0.55; cursor: default; }
+      .btn.added { background: var(--green-soft); color: var(--green); border-color: transparent; }
+
+      /* Search results */
+      .results { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 6px; }
+      @media (min-width: 640px) { .results { grid-template-columns: 1fr 1fr; } }
+      .result-card {
+        display: flex; gap: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px;
+        background: var(--surface);
+      }
+      .result-card img.poster, .poster-ph {
+        width: 74px; height: 104px; object-fit: cover; border-radius: 6px; flex: 0 0 auto;
+        background: var(--surface-2);
+      }
+      .poster-ph { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 12px; text-align: center; padding: 6px; }
+      .result-card .meta { min-width: 0; flex: 1; }
+      .result-card h3 { font-size: 17px; font-weight: 700; }
+      .facts { font-size: 13.5px; color: var(--ink-soft); margin-top: 3px; }
+      .result-card .summary {
+        font-size: 14px; color: var(--ink-soft); margin-top: 6px;
+        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .result-card .actions { margin-top: 10px; }
+
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+      .chip {
+        font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+        background: var(--surface-2); color: var(--ink-soft);
+      }
+      .chip.status-running { background: var(--green-soft); color: var(--green); }
+      .chip.status-ended { background: var(--amber-soft); color: var(--amber); }
+
+      /* My shows */
+      .empty {
+        border: 1.5px dashed var(--line); border-radius: var(--radius);
+        padding: 26px 18px; text-align: center; color: var(--ink-soft); margin-top: 14px;
+      }
+      .empty strong { color: var(--ink); display: block; font-size: 17px; margin-bottom: 4px; }
+      .show-list { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+      @media (min-width: 760px) { .show-list { grid-template-columns: 1fr 1fr; } }
+      .show-card {
+        display: flex; gap: 14px;
+        border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 12px; background: var(--surface);
+        cursor: pointer; text-align: left; width: 100%;
+      }
+      .show-card:hover { border-color: var(--ink-faint); }
+      .show-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1.5px var(--accent); }
+      .show-card img.poster, .show-card .poster-ph { width: 64px; height: 90px; }
+      .show-card .meta { flex: 1; min-width: 0; }
+      .show-card h3 { font-size: 17px; }
+      .progress-track { height: 8px; border-radius: 99px; background: var(--surface-2); margin-top: 8px; overflow: hidden; }
+      .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+      .progress-text { font-size: 13.5px; color: var(--ink-soft); margin-top: 5px; }
+      .next-ep { font-size: 14px; margin-top: 6px; font-weight: 600; }
+      .next-ep .lbl { color: var(--ink-faint); font-weight: 500; }
+
+      /* Detail */
+      #detailBlock { display: none; }
+      #detailBlock.open { display: block; }
+      .detail-head { display: flex; gap: 18px; flex-wrap: wrap; }
+      .detail-head img.poster, .detail-head .poster-ph { width: 150px; height: 210px; border-radius: 8px; }
+      .detail-head .info { flex: 1 1 280px; min-width: 0; }
+      .detail-head h2 { font-size: 26px; font-weight: 800; }
+      .detail-summary { color: var(--ink-soft); margin-top: 10px; max-width: 68ch; }
+      .detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+      .position-line {
+        margin-top: 14px; padding: 12px 14px; border-radius: 8px;
+        background: var(--accent-soft); font-size: 15px;
+      }
+      .position-line strong { font-weight: 700; }
+      .season-head {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        margin: 22px 0 8px; padding-top: 16px; border-top: 1px solid var(--line);
+      }
+      .season-head h3 { font-size: 17px; }
+      .ep-list { list-style: none; margin: 0; padding: 0; }
+      .ep-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 8px; border-bottom: 1px solid var(--line);
+      }
+      .ep-row:last-child { border-bottom: none; }
+      .ep-row.is-next { background: var(--accent-soft); border-radius: 8px; }
+      .ep-row .ep-main { flex: 1; min-width: 0; }
+      .ep-row .ep-code { font-weight: 700; font-size: 14px; color: var(--ink-soft); white-space: nowrap; }
+      .ep-row .ep-title { font-weight: 600; }
+      .ep-row .ep-date { font-size: 13.5px; color: var(--ink-faint); }
+      .ep-row.watched .ep-title { color: var(--ink-faint); }
+      .watch-btn { flex: 0 0 auto; min-width: 118px; }
+      .watch-btn.done { background: var(--green-soft); color: var(--green); border-color: transparent; }
+      .next-tag { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); display: block; }
+
+      /* Backup */
+      .backup-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 14px; }
+      @media (min-width: 700px) { .backup-grid { grid-template-columns: 1fr 1fr; } }
+      .backup-box { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+      .backup-box h3 { font-size: 16px; margin-bottom: 6px; }
+      .backup-box p { margin: 0 0 12px; font-size: 14.5px; color: var(--ink-soft); }
+      .backup-box .row { display: flex; gap: 10px; flex-wrap: wrap; }
+      .file-group { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+      .file-group > span { font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
+      input[type="file"] { min-height: 44px; max-width: 100%; font-size: 14px; color: var(--ink-soft); padding: 4px 0; }
+      input[type="file"]::file-selector-button {
+        min-height: 44px; padding: 10px 18px; margin-right: 10px;
+        border-radius: 8px; border: 1.5px solid var(--line);
+        background: var(--surface); color: var(--ink);
+        font: inherit; font-weight: 600; cursor: pointer;
+      }
+      input[type="file"]::file-selector-button:hover { border-color: var(--ink-faint); }
+      .report {
+        display: none; margin-top: 14px; border-radius: 8px; padding: 14px; font-size: 14.5px;
+      }
+      .report.show { display: block; }
+      .report.ok { background: var(--green-soft); }
+      .report.warn { background: var(--amber-soft); }
+      .report.err { background: var(--red-soft); }
+      .report ul { margin: 8px 0 0; padding-left: 20px; max-height: 220px; overflow: auto; }
+      .report .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+      .note { font-size: 13.5px; color: var(--ink-faint); margin-top: 12px; }
+
+      /* Other sites + footer */
+      .site-links { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+      @media (min-width: 640px) { .site-links { grid-template-columns: 1fr 1fr; } }
+      .site-link {
+        display: block; border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 14px 16px; text-decoration: none; color: var(--ink); background: var(--surface);
+      }
+      .site-link:hover { border-color: var(--accent); }
+      .site-link strong { display: block; font-size: 16px; color: var(--accent); }
+      .site-link span { font-size: 14px; color: var(--ink-soft); }
+      footer { margin-top: 22px; color: var(--ink-faint); font-size: 13.5px; text-align: center; }
+      footer a { color: var(--ink-soft); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page-head">
+        <h1>TV Show Tracker</h1>
+        <p>Keep a list of the shows you watch, see what each show is about, and record the season and episode you are on. Show details and episode lists come from TVMaze.</p>
+      </header>
+
+      <!-- Search -->
+      <section class="block" aria-labelledby="searchH">
+        <h2 id="searchH">Add a show</h2>
+        <p class="sub">Search TVMaze by show name, then add a result to your list. Adding a show also loads its full episode list.</p>
+        <form class="search-row" id="searchForm">
+          <input type="search" id="searchInput" placeholder="Type a show name, for example: The Office" autocomplete="off" aria-label="Show name" />
+          <button type="submit" class="btn primary" id="searchBtn">Search</button>
+        </form>
+        <p class="status-line" id="searchStatus" role="status"></p>
+        <div class="results" id="searchResults"></div>
+      </section>
+
+      <!-- My shows -->
+      <section class="block" aria-labelledby="listH">
+        <h2 id="listH">My shows</h2>
+        <p class="sub" id="listSummary">Your list is saved in this browser on this device only. Use the backup section below to move it or restore it after clearing browser data.</p>
+        <div id="showListWrap"></div>
+      </section>
+
+      <!-- Detail -->
+      <section class="block" id="detailBlock" aria-labelledby="detailName">
+        <div class="detail-head">
+          <div id="detailPoster"></div>
+          <div class="info">
+            <h2 id="detailName"></h2>
+            <div class="facts" id="detailFacts"></div>
+            <div class="chips" id="detailChips"></div>
+            <p class="detail-summary" id="detailSummary"></p>
+            <div class="position-line" id="positionLine"></div>
+            <div class="detail-actions">
+              <button type="button" class="btn" id="refreshBtn">Refresh episode list</button>
+              <button type="button" class="btn danger" id="removeBtn">Remove this show</button>
+            </div>
+            <p class="status-line" id="detailStatus" role="status"></p>
+          </div>
+        </div>
+        <div id="episodeWrap"></div>
+      </section>
+
+      <!-- Backup -->
+      <section class="block" aria-labelledby="backupH">
+        <h2 id="backupH">Backup and restore</h2>
+        <p class="sub">Your list is stored only in this browser. Export a backup file before clearing browser data, then import it afterwards to get everything back.</p>
+        <div class="backup-grid">
+          <div class="backup-box">
+            <h3>JSON — full backup</h3>
+            <p>Saves your whole list and progress exactly as it is. Importing a JSON file replaces the list on this device with the file's contents.</p>
+            <div class="row">
+              <button type="button" class="btn primary" id="exportJsonBtn">Export JSON</button>
+              <div class="file-group">
+                <span>Import JSON</span>
+                <input type="file" id="importJsonFile" accept=".json,application/json" aria-label="Import JSON backup file" />
+              </div>
+            </div>
+          </div>
+          <div class="backup-box">
+            <h3>CSV — for Excel</h3>
+            <p>One row per episode, with a watched column. Opens cleanly in Excel. On import, the file is checked first and any problem rows are listed before anything is applied.</p>
+            <div class="row">
+              <button type="button" class="btn primary" id="exportCsvBtn">Export CSV</button>
+              <div class="file-group">
+                <span>Import CSV</span>
+                <input type="file" id="importCsvFile" accept=".csv,text/csv" aria-label="Import CSV file" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="report" id="importReport" role="status"></div>
+        <p class="note">CSV import adds or updates shows and watched marks from the file's valid rows. It does not delete shows that are already in your list.</p>
+      </section>
+
+      <!-- Other sites -->
+      <section class="block" aria-labelledby="otherH">
+        <h2 id="otherH">Other sites</h2>
+        <div class="site-links">
+          <a class="site-link" href="https://ejyoungr-hash.github.io/moon/" target="_blank" rel="noopener">
+            <strong>The Moon</strong>
+            <span>Moon photos, facts, a quiz, and a phase memory game.</span>
+          </a>
+          <a class="site-link" href="https://ejyoungr-hash.github.io/daily-devotionals-for-men/" target="_blank" rel="noopener">
+            <strong>Daily Devotionals for Men</strong>
+            <span>A daily devotional series with each day's passage and notes.</span>
+          </a>
+        </div>
+      </section>
+
+      <footer>
+        Show data, posters, and episode lists are provided by <a href="https://www.tvmaze.com" target="_blank" rel="noopener">TVMaze</a> (api.tvmaze.com). List and progress are stored in this browser only and are not sent anywhere.
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var STORAGE_KEY = "tvShowTracker.v1";
+        var API = "https://api.tvmaze.com";
+
+        var state = loadState();
+        var selectedId = null;
+        var pendingCsv = null;   // { rows: [...valid episode rows grouped], problems: [...] }
+        var pendingJson = null;  // parsed state awaiting confirm
+
+        // ---------- storage ----------
+        function loadState() {
+          try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return { shows: [] };
+            var parsed = JSON.parse(raw);
+            if (!parsed || !Array.isArray(parsed.shows)) return { shows: [] };
+            return parsed;
+          } catch (e) {
+            return { shows: [] };
+          }
+        }
+        function saveState() {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* storage full/unavailable */ }
+        }
+
+        // ---------- helpers ----------
+        function el(id) { return document.getElementById(id); }
+        function esc(s) {
+          return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+        }
+        function stripHtml(html) {
+          if (!html) return "";
+          var d = document.createElement("div");
+          d.innerHTML = html;
+          return (d.textContent || "").trim();
+        }
+        function networkName(show) {
+          if (show.network && show.network.name) return show.network.name;
+          if (show.webChannel && show.webChannel.name) return show.webChannel.name;
+          return "";
+        }
+        function fmtDate(iso) {
+          if (!iso) return "Date not listed";
+          var parts = iso.split("-");
+          if (parts.length !== 3) return iso;
+          var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          var m = parseInt(parts[1], 10);
+          var d = parseInt(parts[2], 10);
+          if (!months[m - 1] || isNaN(d)) return iso;
+          return months[m - 1] + " " + d + ", " + parts[0];
+        }
+        function sortedEpisodes(show) {
+          var eps = (show.episodes || []).slice();
+          eps.sort(function (a, b) {
+            if (a.season !== b.season) return a.season - b.season;
+            return a.number - b.number;
+          });
+          return eps;
+        }
+        function watchedSet(show) {
+          var set = {};
+          (show.watchedIds || []).forEach(function (id) { set[id] = true; });
+          return set;
+        }
+        function progressOf(show) {
+          var eps = sortedEpisodes(show);
+          var set = watchedSet(show);
+          var watched = 0;
+          var next = null;
+          for (var i = 0; i < eps.length; i++) {
+            if (set[eps[i].id]) watched++;
+            else if (!next) next = eps[i];
+          }
+          return { total: eps.length, watched: watched, next: next };
+        }
+        function findShow(id) {
+          for (var i = 0; i < state.shows.length; i++) {
+            if (state.shows[i].id === id) return state.shows[i];
+          }
+          return null;
+        }
+        function posterHtml(show, cls) {
+          if (show.image) {
+            return '<img class="poster" src="' + esc(show.image) + '" alt="Poster for ' + esc(show.name) + '" loading="lazy" />';
+          }
+          return '<div class="poster-ph ' + (cls || "") + '">No poster</div>';
+        }
+        function statusChip(status) {
+          var cls = status === "Running" ? "status-running" : (status === "Ended" ? "status-ended" : "");
+          return status ? '<span class="chip ' + cls + '">' + esc(status) + "</span>" : "";
+        }
+
+        // ---------- search ----------
+        el("searchForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          doSearch();
+        });
+
+        function doSearch() {
+          var q = el("searchInput").value.trim();
+          var status = el("searchStatus");
+          var results = el("searchResults");
+          results.innerHTML = "";
+          if (!q) {
+            status.textContent = "Type a show name first.";
+            status.className = "status-line error";
+            return;
+          }
+          status.textContent = "Searching TVMaze…";
+          status.className = "status-line";
+          el("searchBtn").disabled = true;
+
+          fetch(API + "/search/shows?q=" + encodeURIComponent(q))
+            .then(function (r) {
+              if (!r.ok) throw new Error("Search failed (" + r.status + ")");
+              return r.json();
+            })
+            .then(function (data) {
+              el("searchBtn").disabled = false;
+              if (!Array.isArray(data) || data.length === 0) {
+                status.textContent = "No shows found for “" + q + "”. Check the spelling and try again.";
+                status.className = "status-line error";
+                return;
+              }
+              status.textContent = data.length + (data.length === 1 ? " result" : " results") + " — tap Add to put a show on your list.";
+              status.className = "status-line";
+              renderResults(data.map(function (item) { return item.show; }));
+            })
+            .catch(function () {
+              el("searchBtn").disabled = false;
+              status.textContent = "Search could not reach TVMaze. Check your internet connection and try again.";
+              status.className = "status-line error";
+            });
+        }
+
+        function renderResults(shows) {
+          var wrap = el("searchResults");
+          wrap.innerHTML = "";
+          shows.forEach(function (show) {
+            if (!show || !show.id) return;
+            var already = !!findShow(show.id);
+            var card = document.createElement("div");
+            card.className = "result-card";
+            var net = networkName(show);
+            var facts = [net, show.premiered ? "Started " + fmtDate(show.premiered) : ""].filter(Boolean).join(" · ");
+            var genres = (show.genres || []).map(function (g) { return '<span class="chip">' + esc(g) + "</span>"; }).join("");
+            card.innerHTML =
+              posterHtml({ image: show.image ? show.image.medium : "", name: show.name }) +
+              '<div class="meta">' +
+                "<h3>" + esc(show.name) + "</h3>" +
+                (facts ? '<div class="facts">' + esc(facts) + "</div>" : "") +
+                '<div class="chips">' + statusChip(show.status) + genres + "</div>" +
+                (show.summary ? '<p class="summary">' + esc(stripHtml(show.summary)) + "</p>" : "") +
+                '<div class="actions">' +
+                  (already
+                    ? '<button type="button" class="btn added" disabled>Already on your list</button>'
+                    : '<button type="button" class="btn primary add-btn">Add to my list</button>') +
+                "</div>" +
+              "</div>";
+            if (!already) {
+              card.querySelector(".add-btn").addEventListener("click", function () {
+                addShow(show, this);
+              });
+            }
+            wrap.appendChild(card);
+          });
+        }
+
+        function addShow(tvShow, btn) {
+          btn.disabled = true;
+          btn.textContent = "Adding…";
+          fetch(API + "/shows/" + tvShow.id + "/episodes")
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .catch(function () { return []; })
+            .then(function (eps) {
+              var record = {
+                id: tvShow.id,
+                name: tvShow.name || "Untitled",
+                summary: stripHtml(tvShow.summary),
+                image: tvShow.image ? (tvShow.image.medium || "") : "",
+                network: networkName(tvShow),
+                status: tvShow.status || "",
+                genres: tvShow.genres || [],
+                premiered: tvShow.premiered || "",
+                episodes: (Array.isArray(eps) ? eps : []).map(function (e) {
+                  return { id: e.id, season: e.season, number: e.number, name: e.name || "", airdate: e.airdate || "" };
+                }),
+                watchedIds: [],
+                addedAt: new Date().toISOString()
+              };
+              state.shows.push(record);
+              saveState();
+              btn.textContent = "Added";
+              btn.className = "btn added";
+              renderList();
+              openDetail(record.id);
+              el("searchStatus").textContent = "“" + record.name + "” was added to your list with " + record.episodes.length + " episodes.";
+              el("searchStatus").className = "status-line";
+            });
+        }
+
+        // ---------- list ----------
+        function renderList() {
+          var wrap = el("showListWrap");
+          if (state.shows.length === 0) {
+            wrap.innerHTML = '<div class="empty"><strong>No shows yet</strong>Search above and add a show to start your list.</div>';
+            return;
+          }
+          var list = document.createElement("div");
+          list.className = "show-list";
+          state.shows.forEach(function (show) {
+            var p = progressOf(show);
+            var pct = p.total ? Math.round((p.watched / p.total) * 100) : 0;
+            var nextText;
+            if (p.total === 0) nextText = '<span class="lbl">No episodes loaded yet — open the show to refresh.</span>';
+            else if (!p.next) nextText = "All episodes watched";
+            else nextText = '<span class="lbl">Next:</span> S' + p.next.season + " E" + p.next.number + " — " + esc(p.next.name || "Untitled episode");
+            var card = document.createElement("button");
+            card.type = "button";
+            card.className = "show-card" + (show.id === selectedId ? " selected" : "");
+            card.innerHTML =
+              posterHtml(show) +
+              '<span class="meta">' +
+                "<h3>" + esc(show.name) + "</h3>" +
+                '<span class="facts">' + esc([show.network, show.status].filter(Boolean).join(" · ")) + "</span>" +
+                '<span class="progress-track"><span class="progress-fill" style="width:' + pct + '%"></span></span>' +
+                '<span class="progress-text">' + p.watched + " of " + p.total + " episodes watched (" + pct + "%)</span>" +
+                '<span class="next-ep">' + nextText + "</span>" +
+              "</span>";
+            card.addEventListener("click", function () { openDetail(show.id); });
+            list.appendChild(card);
+          });
+          wrap.innerHTML = "";
+          wrap.appendChild(list);
+        }
+
+        // ---------- detail ----------
+        function openDetail(id) {
+          selectedId = id;
+          renderList();
+          renderDetail();
+          el("detailBlock").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function renderDetail() {
+          var block = el("detailBlock");
+          var show = selectedId != null ? findShow(selectedId) : null;
+          if (!show) { block.className = "block"; block.classList.remove("open"); return; }
+          block.classList.add("open");
+
+          el("detailPoster").innerHTML = posterHtml(show);
+          el("detailName").textContent = show.name;
+          var facts = [show.network, show.premiered ? "Started " + fmtDate(show.premiered) : ""].filter(Boolean).join(" · ");
+          el("detailFacts").textContent = facts;
+          el("detailChips").innerHTML = statusChip(show.status) +
+            (show.genres || []).map(function (g) { return '<span class="chip">' + esc(g) + "</span>"; }).join("");
+          el("detailSummary").textContent = show.summary || "No synopsis available from TVMaze for this show.";
+
+          var p = progressOf(show);
+          var pos;
+          if (p.total === 0) pos = "No episodes are loaded for this show yet. Use “Refresh episode list” to load them from TVMaze.";
+          else if (!p.next) pos = "You have watched every episode on the list (" + p.watched + " of " + p.total + ").";
+          else pos = "You are on <strong>Season " + p.next.season + ", Episode " + p.next.number + "</strong> — “" + esc(p.next.name || "Untitled episode") + "”" +
+            (p.next.airdate ? ", first aired " + fmtDate(p.next.airdate) : "") +
+            ". Watched so far: <strong>" + p.watched + " of " + p.total + "</strong> episodes.";
+          el("positionLine").innerHTML = pos;
+
+          var removeBtn = el("removeBtn");
+          removeBtn.textContent = "Remove this show";
+          removeBtn.classList.remove("armed");
+          removeBtn.dataset.armed = "";
+
+          renderEpisodes(show);
+        }
+
+        function renderEpisodes(show) {
+          var wrap = el("episodeWrap");
+          wrap.innerHTML = "";
+          var eps = sortedEpisodes(show);
+          if (eps.length === 0) {
+            wrap.innerHTML = '<p class="sub" style="margin-top:14px;">No episodes loaded. Use “Refresh episode list” above to load them from TVMaze.</p>';
+            return;
+          }
+          var set = watchedSet(show);
+          var p = progressOf(show);
+          var nextId = p.next ? p.next.id : null;
+
+          var seasons = [];
+          var bySeason = {};
+          eps.forEach(function (e) {
+            if (!bySeason[e.season]) { bySeason[e.season] = []; seasons.push(e.season); }
+            bySeason[e.season].push(e);
+          });
+
+          seasons.forEach(function (season) {
+            var head = document.createElement("div");
+            head.className = "season-head";
+            var seasonEps = bySeason[season];
+            var allWatched = seasonEps.every(function (e) { return set[e.id]; });
+            head.innerHTML = "<h3>Season " + season + "</h3>";
+            var seasonBtn = document.createElement("button");
+            seasonBtn.type = "button";
+            seasonBtn.className = "btn small";
+            seasonBtn.textContent = allWatched ? "Mark season not watched" : "Mark season watched";
+            seasonBtn.addEventListener("click", function () {
+              var setNow = watchedSet(show);
+              seasonEps.forEach(function (e) {
+                if (allWatched) delete setNow[e.id]; else setNow[e.id] = true;
+              });
+              show.watchedIds = Object.keys(setNow).map(function (k) { return parseInt(k, 10); });
+              saveState();
+              renderList();
+              renderDetail();
+            });
+            head.appendChild(seasonBtn);
+            wrap.appendChild(head);
+
+            var ul = document.createElement("ul");
+            ul.className = "ep-list";
+            seasonEps.forEach(function (e) {
+              var isWatched = !!set[e.id];
+              var li = document.createElement("li");
+              li.className = "ep-row" + (isWatched ? " watched" : "") + (e.id === nextId ? " is-next" : "");
+              li.innerHTML =
+                '<span class="ep-code">S' + e.season + " E" + e.number + "</span>" +
+                '<span class="ep-main">' +
+                  (e.id === nextId ? '<span class="next-tag">Next to watch</span>' : "") +
+                  '<span class="ep-title">' + esc(e.name || "Untitled episode") + "</span><br />" +
+                  '<span class="ep-date">' + fmtDate(e.airdate) + "</span>" +
+                "</span>";
+              var btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "btn small watch-btn" + (isWatched ? " done" : "");
+              btn.textContent = isWatched ? "Watched ✓" : "Mark watched";
+              btn.setAttribute("aria-pressed", isWatched ? "true" : "false");
+              btn.addEventListener("click", function () {
+                var s = watchedSet(show);
+                if (s[e.id]) delete s[e.id]; else s[e.id] = true;
+                show.watchedIds = Object.keys(s).map(function (k) { return parseInt(k, 10); });
+                saveState();
+                renderList();
+                renderDetail();
+              });
+              li.appendChild(btn);
+              ul.appendChild(li);
+            });
+            wrap.appendChild(ul);
+          });
+        }
+
+        el("refreshBtn").addEventListener("click", function () {
+          var show = selectedId != null ? findShow(selectedId) : null;
+          if (!show) return;
+          var status = el("detailStatus");
+          status.textContent = "Loading episodes from TVMaze…";
+          status.className = "status-line";
+          fetch(API + "/shows/" + show.id + "/episodes")
+            .then(function (r) {
+              if (!r.ok) throw new Error("bad response");
+              return r.json();
+            })
+            .then(function (eps) {
+              show.episodes = (Array.isArray(eps) ? eps : []).map(function (e) {
+                return { id: e.id, season: e.season, number: e.number, name: e.name || "", airdate: e.airdate || "" };
+              });
+              var valid = {};
+              show.episodes.forEach(function (e) { valid[e.id] = true; });
+              show.watchedIds = (show.watchedIds || []).filter(function (id) { return valid[id]; });
+              saveState();
+              status.textContent = "Episode list updated: " + show.episodes.length + " episodes.";
+              renderList();
+              renderDetail();
+            })
+            .catch(function () {
+              status.textContent = "Could not reach TVMaze. Check your internet connection and try again.";
+              status.className = "status-line error";
+            });
+        });
+
+        el("removeBtn").addEventListener("click", function () {
+          var show = selectedId != null ? findShow(selectedId) : null;
+          if (!show) return;
+          var btn = el("removeBtn");
+          if (btn.dataset.armed !== "1") {
+            btn.dataset.armed = "1";
+            btn.textContent = "Tap again to remove “" + show.name + "”";
+            btn.classList.add("armed");
+            return;
+          }
+          state.shows = state.shows.filter(function (s) { return s.id !== show.id; });
+          selectedId = null;
+          saveState();
+          renderList();
+          renderDetail();
+        });
+
+        // ---------- downloads ----------
+        function download(filename, text, mime) {
+          var blob = new Blob([text], { type: mime });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        }
+        function dateStamp() {
+          var d = new Date();
+          function pad(n) { return (n < 10 ? "0" : "") + n; }
+          return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+        }
+
+        // ---------- JSON export / import ----------
+        el("exportJsonBtn").addEventListener("click", function () {
+          var payload = { app: "tv-show-tracker", version: 1, exportedAt: new Date().toISOString(), shows: state.shows };
+          download("tv-show-tracker-backup-" + dateStamp() + ".json", JSON.stringify(payload, null, 2), "application/json");
+          showReport("ok", "JSON backup downloaded. Keep the file somewhere safe — importing it restores your list exactly.");
+        });
+
+        el("importJsonFile").addEventListener("change", function () {
+          var file = this.files && this.files[0];
+          this.value = "";
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function () {
+            var parsed;
+            try { parsed = JSON.parse(String(reader.result || "")); }
+            catch (e) { showReport("err", "That file could not be read as JSON. No changes were made."); return; }
+            var shows = null;
+            if (Array.isArray(parsed)) shows = parsed;
+            else if (parsed && Array.isArray(parsed.shows)) shows = parsed.shows;
+            if (!shows) { showReport("err", "That JSON file does not contain a show list. No changes were made."); return; }
+            var bad = 0;
+            var clean = [];
+            shows.forEach(function (s) {
+              if (!s || typeof s.id !== "number" || !s.name) { bad++; return; }
+              clean.push({
+                id: s.id,
+                name: String(s.name),
+                summary: String(s.summary || ""),
+                image: String(s.image || ""),
+                network: String(s.network || ""),
+                status: String(s.status || ""),
+                genres: Array.isArray(s.genres) ? s.genres.map(String) : [],
+                premiered: String(s.premiered || ""),
+                episodes: Array.isArray(s.episodes) ? s.episodes.filter(function (e) {
+                  return e && typeof e.id === "number" && typeof e.season === "number" && typeof e.number === "number";
+                }).map(function (e) {
+                  return { id: e.id, season: e.season, number: e.number, name: String(e.name || ""), airdate: String(e.airdate || "") };
+                }) : [],
+                watchedIds: Array.isArray(s.watchedIds) ? s.watchedIds.filter(function (n) { return typeof n === "number"; }) : [],
+                addedAt: String(s.addedAt || "")
+              });
+            });
+            if (clean.length === 0) { showReport("err", "No valid shows were found in that file. No changes were made."); return; }
+            pendingJson = { shows: clean };
+            var msg = "This file holds " + clean.length + (clean.length === 1 ? " show" : " shows") + "." +
+              (bad ? " " + bad + (bad === 1 ? " entry was" : " entries were") + " skipped because it was not a valid show record." : "") +
+              " Importing replaces the " + state.shows.length + (state.shows.length === 1 ? " show" : " shows") + " currently in this browser.";
+            showReport("warn", msg, [
+              { label: "Replace my list with this file", action: function () {
+                  state = { shows: pendingJson.shows };
+                  pendingJson = null;
+                  selectedId = null;
+                  saveState();
+                  renderList();
+                  renderDetail();
+                  showReport("ok", "Import complete. Your list now matches the backup file.");
+                } },
+              { label: "Cancel", action: function () { pendingJson = null; hideReport(); } }
+            ]);
+          };
+          reader.readAsText(file);
+        });
+
+        // ---------- CSV export ----------
+        function csvCell(value) {
+          var s = String(value == null ? "" : value);
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        var CSV_HEADER = ["Show ID", "Show Name", "Network", "Status", "Genres", "Season", "Episode Number", "Episode Title", "Air Date", "Episode ID", "Watched"];
+
+        el("exportCsvBtn").addEventListener("click", function () {
+          if (state.shows.length === 0) {
+            showReport("warn", "Your list is empty, so there is nothing to export yet. Add a show first.");
+            return;
+          }
+          var lines = [CSV_HEADER.map(csvCell).join(",")];
+          state.shows.forEach(function (show) {
+            var set = watchedSet(show);
+            var eps = sortedEpisodes(show);
+            if (eps.length === 0) {
+              lines.push([show.id, show.name, show.network, show.status, (show.genres || []).join("; "), "", "", "", "", "", ""].map(csvCell).join(","));
+              return;
+            }
+            eps.forEach(function (e) {
+              lines.push([show.id, show.name, show.network, show.status, (show.genres || []).join("; "), e.season, e.number, e.name, e.airdate, e.id, set[e.id] ? "Yes" : "No"].map(csvCell).join(","));
+            });
+          });
+          download("tv-show-tracker-" + dateStamp() + ".csv", lines.join("\r\n") + "\r\n", "text/csv");
+          showReport("ok", "CSV downloaded. It opens in Excel with one row per episode and a Watched column.");
+        });
+
+        // ---------- CSV parsing + import ----------
+        function parseCsv(text) {
+          var rows = [];
+          var row = [];
+          var field = "";
+          var inQuotes = false;
+          var i = 0;
+          text = String(text || "");
+          if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+          while (i < text.length) {
+            var c = text[i];
+            if (inQuotes) {
+              if (c === '"') {
+                if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+                inQuotes = false; i++; continue;
+              }
+              field += c; i++; continue;
+            }
+            if (c === '"') { inQuotes = true; i++; continue; }
+            if (c === ",") { row.push(field); field = ""; i++; continue; }
+            if (c === "\r") { i++; continue; }
+            if (c === "\n") { row.push(field); field = ""; rows.push(row); row = []; i++; continue; }
+            field += c; i++;
+          }
+          if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+          return rows.filter(function (r) { return !(r.length === 1 && r[0].trim() === ""); });
+        }
+
+        el("importCsvFile").addEventListener("change", function () {
+          var file = this.files && this.files[0];
+          this.value = "";
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function () {
+            var rows = parseCsv(String(reader.result || ""));
+            if (rows.length < 2) {
+              showReport("err", "That CSV file has no data rows. No changes were made.");
+              return;
+            }
+            var header = rows[0].map(function (h) { return h.trim().toLowerCase(); });
+            var expected = CSV_HEADER.map(function (h) { return h.toLowerCase(); });
+            var headerOk = header.length === expected.length && expected.every(function (h, idx) { return header[idx] === h; });
+            if (!headerOk) {
+              showReport("err", "The first row of that CSV does not match the expected columns (" + CSV_HEADER.join(", ") + "). No changes were made. Export a CSV from this page to get the right format.");
+              return;
+            }
+            var problems = [];
+            var valid = [];
+            for (var r = 1; r < rows.length; r++) {
+              var cells = rows[r];
+              var rowNum = r + 1;
+              function problem(reason) { problems.push("Row " + rowNum + ": " + reason); }
+              if (cells.length !== CSV_HEADER.length) { problem("expected " + CSV_HEADER.length + " columns, found " + cells.length + "."); continue; }
+              var showId = parseInt(cells[0], 10);
+              var showName = cells[1].trim();
+              if (isNaN(showId)) { problem("Show ID is not a number."); continue; }
+              if (!showName) { problem("Show Name is blank."); continue; }
+              var hasEp = cells[5].trim() !== "" || cells[6].trim() !== "" || cells[9].trim() !== "";
+              var ep = null;
+              if (hasEp) {
+                var season = parseInt(cells[5], 10);
+                var number = parseInt(cells[6], 10);
+                var epId = parseInt(cells[9], 10);
+                if (isNaN(season) || season < 0) { problem("Season is not a valid number."); continue; }
+                if (isNaN(number) || number < 0) { problem("Episode Number is not a valid number."); continue; }
+                if (isNaN(epId)) { problem("Episode ID is not a number."); continue; }
+                var airdate = cells[8].trim();
+                if (airdate && !/^\d{4}-\d{2}-\d{2}$/.test(airdate)) { problem("Air Date must be YYYY-MM-DD or blank."); continue; }
+                var watchedRaw = cells[10].trim().toLowerCase();
+                if (watchedRaw !== "yes" && watchedRaw !== "no" && watchedRaw !== "") { problem("Watched must be Yes or No."); continue; }
+                ep = { id: epId, season: season, number: number, name: cells[7], airdate: airdate, watched: watchedRaw === "yes" };
+              }
+              valid.push({
+                showId: showId, showName: showName, network: cells[2].trim(), status: cells[3].trim(),
+                genres: cells[4].split(";").map(function (g) { return g.trim(); }).filter(Boolean),
+                episode: ep
+              });
+            }
+            if (valid.length === 0) {
+              showReport("err", "No valid rows were found in that CSV, so nothing was imported.", problems);
+              return;
+            }
+            pendingCsv = { valid: valid, problems: problems };
+            var showCount = {};
+            valid.forEach(function (v) { showCount[v.showId] = true; });
+            var nShows = Object.keys(showCount).length;
+            var msg = "Checked the file before importing: " + valid.length + " valid " + (valid.length === 1 ? "row" : "rows") +
+              " covering " + nShows + (nShows === 1 ? " show" : " shows") + "." +
+              (problems.length ? " " + problems.length + (problems.length === 1 ? " problem row was" : " problem rows were") + " found — those rows will be skipped and will not change anything already in your list." : " No problems found.");
+            showReport(problems.length ? "warn" : "ok", msg, [
+              { label: "Import the " + valid.length + " valid rows", action: applyCsvImport },
+              { label: "Cancel", action: function () { pendingCsv = null; hideReport(); } }
+            ], problems);
+          };
+          reader.readAsText(file);
+        });
+
+        function applyCsvImport() {
+          if (!pendingCsv) return;
+          var byShow = {};
+          pendingCsv.valid.forEach(function (v) {
+            if (!byShow[v.showId]) byShow[v.showId] = { meta: v, episodes: [] };
+            if (v.episode) byShow[v.showId].episodes.push(v.episode);
+          });
+          var added = 0, updated = 0;
+          Object.keys(byShow).forEach(function (key) {
+            var group = byShow[key];
+            var show = findShow(parseInt(key, 10));
+            if (!show) {
+              show = {
+                id: parseInt(key, 10), name: group.meta.showName, summary: "", image: "",
+                network: group.meta.network, status: group.meta.status, genres: group.meta.genres,
+                premiered: "", episodes: [], watchedIds: [], addedAt: new Date().toISOString()
+              };
+              state.shows.push(show);
+              added++;
+            } else { updated++; }
+            if (group.meta.network) show.network = group.meta.network;
+            if (group.meta.status) show.status = group.meta.status;
+            if (group.meta.genres.length) show.genres = group.meta.genres;
+            var epById = {};
+            (show.episodes || []).forEach(function (e) { epById[e.id] = e; });
+            var set = watchedSet(show);
+            group.episodes.forEach(function (e) {
+              if (!epById[e.id]) {
+                show.episodes.push({ id: e.id, season: e.season, number: e.number, name: e.name, airdate: e.airdate });
+              }
+              if (e.watched) set[e.id] = true; else delete set[e.id];
+            });
+            show.watchedIds = Object.keys(set).map(function (k) { return parseInt(k, 10); });
+          });
+          pendingCsv = null;
+          saveState();
+          renderList();
+          renderDetail();
+          var parts = [];
+          if (added) parts.push(added + (added === 1 ? " show added" : " shows added"));
+          if (updated) parts.push(updated + (updated === 1 ? " show updated" : " shows updated"));
+          showReport("ok", "CSV import complete: " + (parts.join(", ") || "no changes") + ". Open a show and use “Refresh episode list” to fill in its synopsis and poster from TVMaze.");
+        }
+
+        // ---------- report box ----------
+        function showReport(kind, message, actions, listItems) {
+          var box = el("importReport");
+          box.className = "report show " + kind;
+          box.innerHTML = "";
+          var p = document.createElement("div");
+          p.textContent = message;
+          box.appendChild(p);
+          if (listItems && listItems.length) {
+            var ul = document.createElement("ul");
+            listItems.forEach(function (item) {
+              var li = document.createElement("li");
+              li.textContent = item;
+              ul.appendChild(li);
+            });
+            box.appendChild(ul);
+          }
+          if (actions && actions.length) {
+            var row = document.createElement("div");
+            row.className = "row";
+            actions.forEach(function (a, idx) {
+              var b = document.createElement("button");
+              b.type = "button";
+              b.className = "btn" + (idx === 0 ? " primary" : "");
+              b.textContent = a.label;
+              b.addEventListener("click", a.action);
+              row.appendChild(b);
+            });
+            box.appendChild(row);
+          }
+          box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        function hideReport() {
+          var box = el("importReport");
+          box.className = "report";
+          box.innerHTML = "";
+        }
+
+        // ---------- init ----------
+        renderList();
+      })();
+    </script>
+  </body>
+</html>
